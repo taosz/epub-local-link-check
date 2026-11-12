@@ -1,0 +1,36 @@
+name: Test action
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Build synthetic test EPUBs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          for name, target in [('ok.epub', 'b.xhtml#part'), ('broken.epub', 'missing.xhtml')]:
+              with zipfile.ZipFile(name, 'w') as z:
+                  z.writestr('a.xhtml', '<html><a href="' + target + '">next</a></html>')
+                  z.writestr('b.xhtml', '<html id="part"/>')
+          PY
+      - name: Valid reference
+        uses: ./
+        with:
+          epub-path: ok.epub
+      - name: Missing reference must fail
+        id: broken
+        continue-on-error: true
+        uses: ./
+        with:
+          epub-path: broken.epub
+      - name: Verify failure was detected
+        shell: bash
+        env:
+          RESULT: ${{ steps.broken.outcome }}
+        run: test "$RESULT" = failure
+      - name: Unit tests
+        run: python3 -m unittest discover -v
