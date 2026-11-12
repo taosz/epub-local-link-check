@@ -22,3 +22,25 @@ Scanfile published a short fictional [English source](https://scanfile.online/sa
 ## Relationship and license
 
 This utility is published by the team behind [Scanfile](https://scanfile.online/tools/epub-book-translator), a commercial EPUB translation service. The checker works independently and does not translate, require an account or upload a book. Translation on Scanfile is a separate online service; review its terms and pricing before uploading. This documentation was prepared with AI assistance. Code is MIT licensed; the linked examples are not included under the code license.
+
+## Use in GitHub Actions
+
+For a project that builds an EPUB on a GitHub-hosted Linux runner, run the checker after your build step. The following example assumes your build has produced `book.epub` in the workspace. Pin this action to a reviewed commit SHA in a production workflow.
+
+```yaml
+name: Check ebook links
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Add your own EPUB build step here.
+      - uses: taosz/epub-local-link-check@v0.1.0
+        with:
+          epub-path: book.epub
+```
+
+The action fails when the checker reports errors **or incomplete checks**. The report is printed in the runner log and can contain internal paths and link targets. Anyone with access to those logs may see them; avoid running this on confidential books without assessing your CI provider and repository access. This action sends no file to Scanfile; checkout and GitHub-hosted runners are separate services. Run EPUBCheck and reader/linguistic review independently.

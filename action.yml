@@ -1,0 +1,14 @@
+name: Check EPUB local links
+description: Check local XML references and fragment IDs in an EPUB without uploading it.
+inputs:
+  epub-path:
+    description: Path to an EPUB file in the runner workspace.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check links in EPUB
+      shell: bash
+      env:
+        EPUB_INPUT_PATH: ${{ inputs.epub-path }}
+      run: python3 "$GITHUB_ACTION_PATH/check_epub_links.py" "$EPUB_INPUT_PATH"
